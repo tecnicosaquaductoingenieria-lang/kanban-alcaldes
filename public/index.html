@@ -3,293 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kanban - Gestión de Alcalá</title>
+    <title>Aquaducto - Gestión de Contactos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #007cc3;
+            --primary-dark: #005a8f;
+            --secondary: #00d084;
+            --bg-dark: #1a1a2e;
+            --bg-card: #242442;
+            --bg-header: linear-gradient(135deg, #007cc3 0%, #005a8f 100%);
+            --text: #ffffff;
+            --text-muted: #8b8ba7;
+            --border: #2d2d5a;
+            --success: #00d084;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 1.3rem; }
-        .tabs { background: #16213e; display: flex; padding: 0 30px; border-bottom: 1px solid #2c3e50; }
-        .tab { padding: 15px 25px; cursor: pointer; border-bottom: 3px solid transparent; font-size: 0.95rem; transition: all 0.3s; }
-        .tab:hover { background: #1e2a4a; }
-        .tab.active { border-color: #e74c3c; background: #1e2a4a; }
-        .stats-bar { background: #16213e; padding: 15px 30px; display: flex; gap: 30px; }
-        .stat-value { font-size: 1.5rem; font-weight: bold; color: #e74c3c; }
-        .stat-label { font-size: 0.8rem; color: #888; }
-        .kanban-board { display: flex; gap: 20px; padding: 20px 30px; overflow-x: auto; min-height: calc(100vh - 200px); }
-        .column { flex: 0 0 300px; background: #16213e; border-radius: 10px; padding: 15px; max-height: calc(100vh - 250px); overflow-y: auto; }
-        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid; }
-        .column-header h2 { font-size: 1rem; text-transform: uppercase; }
-        .column-count { background: #1a1a2e; padding: 2px 10px; border-radius: 15px; font-size: 0.85rem; }
-        .column-cards { display: flex; flex-direction: column; gap: 10px; }
-        .card { background: #1a1a2e; border-radius: 8px; padding: 12px; cursor: grab; border-left: 4px solid; transition: all 0.3s; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .card-alcalde { font-size: 0.75rem; color: #3498db; margin-bottom: 5px; }
-        .card-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
-        .card-description { font-size: 0.8rem; color: #aaa; margin-bottom: 8px; }
-        .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #666; }
-        .priority { padding: 2px 6px; border-radius: 3px; font-weight: 600; }
-        .priority.high { background: #e74c3c; color: white; }
-        .priority.medium { background: #f39c12; color: white; }
-        .priority.low { background: #27ae60; color: white; }
-        .add-card-btn { background: transparent; border: 2px dashed #34495e; color: #666; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; margin-top: 10px; }
-        .add-card-btn:hover { border-color: #e74c3c; color: #e74c3c; }
-        .column.drag-over { background: #1e2a4a; }
-        .alcaldes-view { display: none; padding: 20px 30px; }
-        .alcaldes-view.active { display: block; }
-        .kanban-view { display: none; }
-        .kanban-view.active { display: flex; }
-        .alcaldes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .alcalde-card { background: #16213e; border-radius: 10px; padding: 20px; border-left: 4px solid #3498db; }
-        .alcalde-nombre { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; }
-        .alcalde-empresa { font-size: 0.9rem; color: #888; margin-bottom: 5px; }
-        .alcalde-cargo { font-size: 0.85rem; color: #aaa; margin-bottom: 15px; }
-        .alcalde-contacto { font-size: 0.85rem; color: #3498db; margin-bottom: 5px; }
-        .alcalde-stats { display: flex; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2c3e50; }
-        .alcalde-stat-value { font-size: 1.3rem; font-weight: bold; color: #e74c3c; }
-        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; }
-        .btn-primary { background: #e74c3c; color: white; }
-        .btn-primary:hover { background: #c0392b; }
-        .btn-secondary { background: #34495e; color: white; }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text); min-height: 100vh; }
+
+        /* Header */
+        .header {
+            background: var(--bg-header);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,124,195,0.3);
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .logo svg { width: 32px; height: 32px; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        /* User info */
+        .user-badge { background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; }
+
+        /* Nav Tabs */
+        .nav-tabs {
+            background: var(--bg-card);
+            display: flex;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-tab {
+            padding: 18px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .nav-tab.active { color: var(--primary); border-color: var(--primary); }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: var(--bg-card);
+            padding: 20px 40px;
+            display: flex;
+            gap: 40px;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-card { text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* Main Content */
+        .main-content { padding: 30px 40px; }
+
+        /* Contactos Grid */
+        .contactos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+        .contacto-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        .contacto-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 10px 40px rgba(0,124,195,0.15); }
+        .contacto-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .contacto-nombre { font-size: 1.2rem; font-weight: 600; }
+        .contacto-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+        .contacto-empresa { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 8px; }
+        .contacto-cargo { color: var(--secondary); font-size: 0.9rem; margin-bottom: 16px; }
+        .contacto-info { display: flex; flex-direction: column; gap: 8px; }
+        .contacto-info-item { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 0.9rem; }
+        .contacto-info-item svg { width: 18px; height: 18px; color: var(--primary); }
+        .contacto-stats { display: flex; gap: 20px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .contacto-stat { text-align: center; flex: 1; }
+        .contacto-stat-value { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+        .contacto-stat-label { font-size: 0.75rem; color: var(--text-muted); }
+        .contacto-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+        /* Buttons */
+        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        .btn-secondary:hover { background: #3d3d6a; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-small { padding: 6px 12px; font-size: 0.8rem; }
+
+        /* Kanban */
+        .kanban-board { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; }
+        .kanban-column { flex: 0 0 300px; background: var(--bg-card); border-radius: 16px; padding: 20px; }
+        .kanban-column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+        .kanban-column-title { font-weight: 600; font-size: 1rem; }
+        .kanban-column-count { background: var(--bg-dark); padding: 4px 10px; border-radius: 10px; font-size: 0.85rem; color: var(--text-muted); }
+        .kanban-cards { display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
+        .kanban-card { background: var(--bg-dark); border-radius: 10px; padding: 14px; border: 1px solid var(--border); cursor: grab; transition: all 0.2s; }
+        .kanban-card:hover { border-color: var(--primary); }
+        .kanban-card-title { font-weight: 500; margin-bottom: 8px; font-size: 0.95rem; }
+        .kanban-card-contacto { font-size: 0.8rem; color: var(--primary); margin-bottom: 8px; }
+        .kanban-card-meta { display: flex; justify-content: space-between; align-items: center; }
+        .priority-tag { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+        .priority-high { background: var(--danger); color: white; }
+        .priority-medium { background: var(--warning); color: white; }
+        .priority-low { background: var(--success); color: white; }
+        .kanban-add-btn { width: 100%; padding: 12px; background: transparent; border: 2px dashed var(--border); border-radius: 10px; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: all 0.3s; margin-top: 12px; }
+        .kanban-add-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
-        .modal { background: #16213e; border-radius: 15px; padding: 30px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        .modal h2 { margin-bottom: 20px; color: #e74c3c; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; color: #aaa; font-size: 0.9rem; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #1a1a2e; border: 1px solid #34495e; border-radius: 5px; color: #fff; font-size: 1rem; }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: white; padding: 15px 25px; border-radius: 5px; display: none; z-index: 2000; }
-        .toast.show { display: block; }
-        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a2e; display: flex; justify-content: center; align-items: center; z-index: 3000; }
-        .login-overlay.hidden { display: none; }
-        .login-box { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; }
-        .login-box h2 { margin-bottom: 20px; color: #e74c3c; }
-        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; background: #1a1a2e; border: 1px solid #34495e; border-radius: 5px; color: #fff; }
-        .login-box button { width: 100%; padding: 12px; background: #e74c3c; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 1rem; }
-        .login-box button:hover { background: #c0392b; }
+        .modal { background: var(--bg-card); border-radius: 20px; padding: 32px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+        .modal h2 { margin-bottom: 24px; color: var(--text); font-size: 1.4rem; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 16px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .form-actions { display: flex; gap: 12px; margin-top: 28px; }
+
+        /* Login */
+        .login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .login-screen.hidden { display: none; }
+        .login-box { background: var(--bg-card); border-radius: 24px; padding: 48px; text-align: center; border: 1px solid var(--border); width: 90%; max-width: 400px; }
+        .login-box h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .login-box p { color: var(--text-muted); margin-bottom: 32px; }
+        .login-box input { width: 100%; padding: 16px; margin-bottom: 16px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 1rem; text-align: center; }
+        .login-box button { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+        .login-box button:hover { background: var(--primary-dark); }
+        .login-demo { margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 16px 28px; border-radius: 12px; font-weight: 500; display: none; z-index: 3000; box-shadow: 0 10px 40px rgba(0,208,132,0.3); }
+        .toast.show { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Views */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.5; }
+        .empty-state h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--text); }
+
+        /* Drag states */
+        .kanban-card.dragging { opacity: 0.5; }
+        .kanban-column.drag-over { background: rgba(0,124,195,0.1); }
     </style>
 </head>
 <body>
-    <div class="login-overlay" id="loginOverlay">
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
         <div class="login-box">
-            <h2>🔐 Iniciar Sesión</h2>
+            <h1>🚰 Aquaducto</h1>
+            <p>Gestión de Contactos y Tareas</p>
             <input type="text" id="loginUser" placeholder="Usuario" value="admin">
             <input type="password" id="loginPass" placeholder="Contraseña" value="admin123">
-            <button id="loginBtn">Entrar</button>
-            <p style="font-size: 0.8rem; color: #666; margin-top: 15px;">Demo: admin/admin123</p>
+            <button onclick="login()">Iniciar Sesión</button>
+            <p class="login-demo">Demo: admin / admin123</p>
         </div>
     </div>
 
+    <!-- Header -->
     <div class="header">
-        <h1>📋 Kanban - Gestión de Alcalá</h1>
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+            Aquaducto
+        </div>
         <div class="header-right">
-            <span id="userDisplay"></span>
+            <span class="user-badge" id="userBadge">👤 Administrador</span>
         </div>
     </div>
 
-    <div class="tabs">
-        <div class="tab active" data-view="kanban">📋 Kanban</div>
-        <div class="tab" data-view="alcaldes">🏛️ Alcalá</div>
+    <!-- Nav Tabs -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" data-view="contactos" onclick="showView('contactos')">
+            👥 Contactos
+        </div>
+        <div class="nav-tab" data-view="tareas" onclick="showView('tareas')">
+            📋 Tareas
+        </div>
     </div>
 
+    <!-- Stats Bar -->
     <div class="stats-bar">
-        <div><span class="stat-value" id="statTotal">0</span> <span class="stat-label">Total</span></div>
-        <div><span class="stat-value" id="statAlcaldes">0</span> <span class="stat-label">Alcaldes</span></div>
-    </div>
-
-    <div class="kanban-view active" id="kanbanView">
-        <div class="kanban-board" id="kanbanBoard"></div>
-    </div>
-
-    <div class="alcaldes-view" id="alcaldesView">
-        <div class="alcaldes-grid" id="alcaldesGrid"></div>
-    </div>
-
-    <div class="modal-overlay" id="addCardModal">
-        <div class="modal">
-            <h2>Nueva Tarjeta</h2>
-            <form id="addCardForm">
-                <input type="hidden" id="addCardColumn">
-                <div class="form-group"><label>Título</label><input type="text" id="cardTitle" required></div>
-                <div class="form-group"><label>Descripción</label><textarea id="cardDescription"></textarea></div>
-                <div class="form-group"><label>Álcalde</label><select id="cardAlcalde"><option value="">-- Sin vincular --</option></select></div>
-                <div class="form-group"><label>Prioridad</label><select id="cardPriority"><option value="low">Baja</option><option value="medium" selected>Media</option><option value="high">Alta</option></select></div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addCardModal')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Crear</button>
-                </div>
-            </form>
+        <div class="stat-card">
+            <div class="stat-value" id="statContactos">0</div>
+            <div class="stat-label">Contactos Totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statTareas">0</div>
+            <div class="stat-label">Tareas Activas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statPendientes">0</div>
+            <div class="stat-label">Pendientes de Info</div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="alcaldeModal">
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Contactos View -->
+        <div class="view active" id="contactosView">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 1.3rem;">Tus Contactos</h2>
+                <button class="btn btn-primary" onclick="openModal('contactoModal')">+ Nuevo Contacto</button>
+            </div>
+            <div class="contactos-grid" id="contactosGrid"></div>
+        </div>
+
+        <!-- Tareas View -->
+        <div class="view" id="tareasView">
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 1.3rem; margin-bottom: 20px;">Tablero de Tareas</h2>
+            </div>
+            <div class="kanban-board" id="kanbanBoard"></div>
+        </div>
+    </div>
+
+    <!-- Modal Contacto -->
+    <div class="modal-overlay" id="contactoModal">
         <div class="modal">
-            <h2 id="alcaldeModalTitle">Nuevo Alcalá</h2>
-            <form id="alcaldeForm">
-                <input type="hidden" id="alcaldeId">
-                <div class="form-group"><label>Nombre</label><input type="text" id="alcaldeNombre" required></div>
-                <div class="form-group"><label>Empresa</label><input type="text" id="alcaldeEmpresa"></div>
-                <div class="form-group"><label>Cargo</label><input type="text" id="alcaldeCargo"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="alcaldeEmail"></div>
-                <div class="form-group"><label>Teléfono</label><input type="tel" id="alcaldeTelefono"></div>
-                <div class="form-group"><label>Notas</label><textarea id="alcaldeNotas"></textarea></div>
+            <h2 id="contactoModalTitle">Nuevo Contacto</h2>
+            <form id="contactoForm">
+                <input type="hidden" id="contactoId">
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="contactoNombre" required placeholder="Ej: Juan García">
+                </div>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <input type="text" id="contactoEmpresa" placeholder="Ej: Ayuntamiento de Madrid">
+                </div>
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input type="text" id="contactoCargo" placeholder="Ej: Director de Obras">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="contactoEmail" placeholder="Ej: juan@empresa.com">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="contactoTelefono" placeholder="Ej: +34 600 000 000">
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="contactoNotas" placeholder="Notas sobre este contacto..."></textarea>
+                </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('alcaldeModal')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('contactoModal')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal Tarea -->
+    <div class="modal-overlay" id="tareaModal">
+        <div class="modal">
+            <h2 id="tareaModalTitle">Nueva Tarea</h2>
+            <form id="tareaForm">
+                <input type="hidden" id="tareaColumn">
+                <div class="form-group">
+                    <label>Título de la tarea</label>
+                    <input type="text" id="tareaTitulo" required placeholder="Ej: Revisar presupuesto obra">
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="tareaDescripcion" placeholder="Detalles de la tarea..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Contacto asociado</label>
+                    <select id="tareaContacto"><option value="">-- Sin asociar --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridad</label>
+                    <select id="tareaPrioridad">
+                        <option value="low">Baja</option>
+                        <option value="medium" selected>Media</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('tareaModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Tarea</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
-        // Datos en memoria (para demo sin backend)
-        let columnas = [
-            { id: 'nuevo', name: 'Nuevo', color: '#3498db' },
-            { id: 'en-progreso', name: 'En Progreso', color: '#f39c12' },
-            { id: 'pendiente-info', name: 'Pendiente Info', color: '#9b59b6' },
-            { id: 'completado', name: 'Completado', color: '#27ae60' },
-            { id: 'archivado', name: 'Archivado', color: '#7f8c8d' }
-        ];
-        let tarjetas = [];
-        let alcalde = [
-            { id: 'a1', nombre: 'María López', empresa: 'Ayuntamiento de Sevilla', cargo: 'Concejala de Urbanismo', email: 'maria.lopez@ayto-sevilla.es', telefono: '+34 954 000 000', estado: 'activo' },
-            { id: 'a2', nombre: 'Carlos Martínez', empresa: 'Diputación de Málaga', cargo: 'Director de Infraestructura', email: 'carlos.martinez@dipmalaga.es', telefono: '+34 952 000 000', estado: 'activo' }
+        // =====================
+        // DATA
+        // =====================
+        const COLUMNAS = [
+            { id: 'nuevo', nombre: 'Nuevo', color: '#007cc3' },
+            { id: 'progreso', nombre: 'En Progreso', color: '#f59e0b' },
+            { id: 'pendiente', nombre: 'Pendiente Info', color: '#8b5cf6' },
+            { id: 'completado', nombre: 'Completado', color: '#00d084' }
         ];
 
-        // Login
-        document.getElementById('loginBtn').addEventListener('click', function() {
-            var u = document.getElementById('loginUser').value;
-            var p = document.getElementById('loginPass').value;
+        let contactos = [
+            { id: 'c1', nombre: 'María López', empresa: 'Ayuntamiento de Sevilla', cargo: 'Concejala de Urbanismo', email: 'maria.lopez@ayto-sevilla.es', telefono: '+34 954 000 000', notas: 'Proyecto de renovación urbana', created: new Date().toISOString() },
+            { id: 'c2', nombre: 'Carlos Martínez', empresa: 'Diputación de Málaga', cargo: 'Director de Infraestructura', email: 'carlos.martinez@dipmalaga.es', telefono: '+34 952 000 000', notas: 'Proyecto de carreteras', created: new Date().toISOString() }
+        ];
+
+        let tareas = [];
+
+        // =====================
+        // LOGIN
+        // =====================
+        function login() {
+            const u = document.getElementById('loginUser').value;
+            const p = document.getElementById('loginPass').value;
             if ((u === 'admin' && p === 'admin123') || (u === 'ceo' && p === 'ceo123')) {
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.getElementById('userDisplay').textContent = '👤 ' + (u === 'admin' ? 'Administrador' : 'CEO');
-                showToast('Bienvenido!');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('userBadge').textContent = '👤 ' + (u === 'admin' ? 'Administrador' : 'CEO');
+                showToast('Bienvenido a Aquaducto');
             } else {
-                showToast('Credenciales inválidas', true);
+                showToast('Credenciales incorrectas', true);
             }
-        });
+        }
 
-        // Tabs
-        document.querySelectorAll('.tab').forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-                document.getElementById('kanbanView').classList.remove('active');
-                document.getElementById('alcaldesView').classList.remove('active');
-                if (this.dataset.view === 'kanban') {
-                    this.classList.add('active');
-                    document.getElementById('kanbanView').classList.add('active');
-                } else {
-                    this.classList.add('active');
-                    document.getElementById('alcaldesView').classList.add('active');
-                }
-            });
-        });
+        // =====================
+        // VIEWS
+        // =====================
+        function showView(view) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelector(`.nav-tab[data-view="${view}"]`).classList.add('active');
+            document.getElementById(`${view}View`).classList.add('active');
+        }
 
-        // Render Kanban
+        // =====================
+        // RENDER
+        // =====================
+        function renderContactos() {
+            const grid = document.getElementById('contactosGrid');
+            if (contactos.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><h3>No hay contactos</h3><p>Añade tu primer contacto para empezar</p></div>';
+                return;
+            }
+            grid.innerHTML = contactos.map(c => {
+                const tareasCount = tareas.filter(t => t.contactoId === c.id).length;
+                return '<div class="contacto-card">' +
+                    '<div class="contacto-header">' +
+                        '<span class="contacto-nombre">' + c.nombre + '</span>' +
+                        '<span class="contacto-badge">Activo</span>' +
+                    '</div>' +
+                    '<div class="contacto-empresa">' + c.empresa + '</div>' +
+                    '<div class="contacto-cargo">' + c.cargo + '</div>' +
+                    '<div class="contacto-info">' +
+                        (c.email ? '<div class="contacto-info-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>' + c.email + '</div>' : '') +
+                        (c.telefono ? '<div class="contacto-info-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' + c.telefono + '</div>' : '') +
+                    '</div>' +
+                    '<div class="contacto-stats">' +
+                        '<div class="contacto-stat"><div class="contacto-stat-value">' + tareasCount + '</div><div class="contacto-stat-label">Tareas</div></div>' +
+                    '</div>' +
+                    '<div class="contacto-actions">' +
+                        '<button class="btn btn-secondary btn-small" onclick="editContacto(\'' + c.id + '\')">Editar</button>' +
+                        '<button class="btn btn-danger btn-small" onclick="deleteContacto(\'' + c.id + '\')">Eliminar</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+            document.getElementById('statContactos').textContent = contactos.length;
+        }
+
         function renderKanban() {
-            var board = document.getElementById('kanbanBoard');
-            board.innerHTML = '';
-            columnas.forEach(function(col) {
-                var colCards = tarjetas.filter(function(t) { return t.column_id === col.id; });
-                var colDiv = document.createElement('div');
-                colDiv.className = 'column';
-                colDiv.innerHTML = '<div class="column-header" style="border-color:' + col.color + '"><h2>' + col.name + '</h2><span class="column-count">' + colCards.length + '</span></div><div class="column-cards" data-column="' + col.id + '">' + colCards.map(renderCard).join('') + '<button class="add-card-btn" onclick="openAddCardModal(\'' + col.id + '\')">+ Añadir</button></div>';
-                board.appendChild(colDiv);
-            });
-            initDragDrop();
-        }
+            const board = document.getElementById('kanbanBoard');
+            board.innerHTML = COLUMNAS.map(col => {
+                const colTareas = tareas.filter(t => t.columna === col.id);
+                return '<div class="kanban-column">' +
+                    '<div class="kanban-column-header">' +
+                        '<span class="kanban-column-title">' + col.nombre + '</span>' +
+                        '<span class="kanban-column-count">' + colTareas.length + '</span>' +
+                    '</div>' +
+                    '<div class="kanban-cards" data-column="' + col.id + '" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">' +
+                        colTareas.map(t => renderTareaCard(t)).join('') +
+                    '</div>' +
+                    '<button class="kanban-add-btn" onclick="openTareaModal(\'' + col.id + '\')">+ Añadir tarea</button>' +
+                '</div>';
+            }).join('');
 
-        function renderCard(card) {
-            var aInfo = card.alcalde_id ? alcalde.find(function(a) { return a.id === card.alcalde_id; }) : null;
-            return '<div class="card" data-id="' + card.id + '" draggable="true" style="border-color:' + getPC(card.priority) + '">' +
-                (aInfo ? '<div class="card-alcalde">🏛️ ' + aInfo.nombre + '</div>' : '') +
-                '<div class="card-title">' + card.title + '</div>' +
-                '<div class="card-footer"><span class="priority ' + card.priority + '">' + card.priority.toUpperCase() + '</span></div></div>';
-        }
+            // Update stats
+            document.getElementById('statTareas').textContent = tareas.filter(t => t.columna !== 'completado').length;
+            document.getElementById('statPendientes').textContent = tareas.filter(t => t.columna === 'pendiente').length;
 
-        function getPC(p) { return { high: '#e74c3c', medium: '#f39c12', low: '#27ae60' }[p] || '#f39c12'; }
-
-        // Drag & Drop
-        function initDragDrop() {
-            document.querySelectorAll('.card').forEach(function(card) {
-                card.addEventListener('dragstart', function(e) { e.dataTransfer.setData('text/plain', this.dataset.id); this.style.opacity = '0.5'; });
-                card.addEventListener('dragend', function() { this.style.opacity = '1'; });
-            });
-            document.querySelectorAll('.column-cards').forEach(function(col) {
-                col.addEventListener('dragover', function(e) { e.preventDefault(); this.style.background = '#1e2a4a'; });
-                col.addEventListener('dragleave', function() { this.style.background = ''; });
-                col.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    this.style.background = '';
-                    var id = e.dataTransfer.getData('text/plain');
-                    var card = tarjetas.find(function(t) { return t.id === id; });
-                    if (card) { card.column_id = this.dataset.column; renderKanban(); }
-                });
+            // Add drag listeners
+            document.querySelectorAll('.kanban-card').forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
             });
         }
 
-        // Render Alcalá
-        function renderAlcaldes() {
-            var grid = document.getElementById('alcaldesGrid');
-            grid.innerHTML = '';
-            alcalde.forEach(function(a) {
-                var tCount = tarjetas.filter(function(t) { return t.alcalde_id === a.id; }).length;
-                var div = document.createElement('div');
-                div.className = 'alcalde-card';
-                div.innerHTML = '<div class="alcalde-nombre">' + a.nombre + '</div>' +
-                    '<div class="alcalde-empresa">' + a.empresa + '</div>' +
-                    '<div class="alcalde-cargo">' + a.cargo + '</div>' +
-                    (a.email ? '<div class="alcalde-contacto">📧 ' + a.email + '</div>' : '') +
-                    '<div class="alcalde-stats"><span class="alcalde-stat-value">' + tCount + '</span> tarjetas</div>';
-                grid.appendChild(div);
-            });
-            document.getElementById('statAlcaldes').textContent = alcalde.length;
+        function renderTareaCard(tarea) {
+            const contacto = contactos.find(c => c.id === tarea.contactoId);
+            return '<div class="kanban-card" draggable="true" data-id="' + tarea.id + '">' +
+                '<div class="kanban-card-title">' + tarea.titulo + '</div>' +
+                (contacto ? '<div class="kanban-card-contacto">👤 ' + contacto.nombre + '</div>' : '') +
+                '<div class="kanban-card-meta">' +
+                    '<span class="priority-tag priority-' + tarea.prioridad + '">' + tarea.prioridad.toUpperCase() + '</span>' +
+                '</div>' +
+            '</div>';
         }
 
-        // Modals
-        function openAddCardModal(colId) {
-            document.getElementById('addCardColumn').value = colId;
-            document.getElementById('addCardForm').reset();
-            var s = document.getElementById('cardAlcalde');
-            s.innerHTML = '<option value="">-- Sin vincular --</option>';
-            alcalde.forEach(function(a) { s.innerHTML += '<option value="' + a.id + '">' + a.nombre + '</option>'; });
-            document.getElementById('addCardModal').classList.add('active');
+        // =====================
+        // DRAG & DROP
+        // =====================
+        let draggedTarea = null;
+
+        function handleDragStart(e) {
+            draggedTarea = e.target.dataset.id;
+            e.target.classList.add('dragging');
         }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.parentElement.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.parentElement.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.parentElement.classList.remove('drag-over');
+            const newColumn = e.currentTarget.dataset.column;
+            if (draggedTarea) {
+                const tarea = tareas.find(t => t.id === draggedTarea);
+                if (tarea) {
+                    tarea.columna = newColumn;
+                    renderKanban();
+                }
+            }
+            draggedTarea = null;
+        }
+
+        // =====================
+        // MODALS
+        // =====================
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        // Forms
-        document.getElementById('addCardForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var card = {
-                id: 'c' + Date.now(),
-                title: document.getElementById('cardTitle').value,
-                description: document.getElementById('cardDescription').value,
-                column_id: document.getElementById('addCardColumn').value,
-                priority: document.getElementById('cardPriority').value,
-                alcalde_id: document.getElementById('cardAlcalde').value || null
-            };
-            tarjetas.push(card);
-            closeModal('addCardModal');
-            renderKanban();
-            showToast('Tarjeta creada');
-        });
-
-        // Toast
-        function showToast(msg, isError) {
-            var t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.background = isError ? '#e74c3c' : '#27ae60';
-            t.classList.add('show');
-            setTimeout(function() { t.classList.remove('show'); }, 3000);
+        function openTareaModal(columnId) {
+            document.getElementById('tareaForm').reset();
+            document.getElementById('tareaColumn').value = columnId;
+            document.getElementById('tareaModalTitle').textContent = 'Nueva Tarea';
+            const select = document.getElementById('tareaContacto');
+            select.innerHTML = '<option value="">-- Sin asociar --</option>' + contactos.map(c => '<option value="' + c.id + '">' + c.nombre + ' - ' + c.empresa + '</option>').join('');
+            openModal('tareaModal');
         }
 
-        // Init
+        function editContacto(id) {
+            const c = contactos.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('contactoId').value = c.id;
+            document.getElementById('contactoNombre').value = c.nombre;
+            document.getElementById('contactoEmpresa').value = c.empresa;
+            document.getElementById('contactoCargo').value = c.cargo;
+            document.getElementById('contactoEmail').value = c.email;
+            document.getElementById('contactoTelefono').value = c.telefono;
+            document.getElementById('contactoNotas').value = c.notas || '';
+            document.getElementById('contactoModalTitle').textContent = 'Editar Contacto';
+            openModal('contactoModal');
+        }
+
+        function deleteContacto(id) {
+            if (!confirm('¿Eliminar este contacto?')) return;
+            contactos = contactos.filter(c => c.id !== id);
+            tareas.forEach(t => { if (t.contactoId === id) t.contactoId = null; });
+            renderContactos();
+            renderKanban();
+            showToast('Contacto eliminado');
+        }
+
+        // =====================
+        // FORMS
+        // =====================
+        document.getElementById('contactoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('contactoId').value;
+            const data = {
+                nombre: document.getElementById('contactoNombre').value,
+                empresa: document.getElementById('contactoEmpresa').value,
+                cargo: document.getElementById('contactoCargo').value,
+                email: document.getElementById('contactoEmail').value,
+                telefono: document.getElementById('contactoTelefono').value,
+                notas: document.getElementById('contactoNotas').value
+            };
+            if (id) {
+                const idx = contactos.findIndex(c => c.id === id);
+                if (idx >= 0) contactos[idx] = { ...contactos[idx], ...data };
+                showToast('Contacto actualizado');
+            } else {
+                data.id = 'c' + Date.now();
+                data.created = new Date().toISOString();
+                contactos.push(data);
+                showToast('Contacto creado');
+            }
+            closeModal('contactoModal');
+            renderContactos();
+        });
+
+        document.getElementById('tareaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const tarea = {
+                id: 't' + Date.now(),
+                titulo: document.getElementById('tareaTitulo').value,
+                descripcion: document.getElementById('tareaDescripcion').value,
+                contactoId: document.getElementById('tareaContacto').value || null,
+                prioridad: document.getElementById('tareaPrioridad').value,
+                columna: document.getElementById('tareaColumn').value
+            };
+            tareas.push(tarea);
+            closeModal('tareaModal');
+            renderKanban();
+            showToast('Tarea creada');
+        });
+
+        // =====================
+        // TOAST
+        // =====================
+        function showToast(msg, isError) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isError ? '#ef4444' : '#00d084';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // =====================
+        // INIT
+        // =====================
+        renderContactos();
         renderKanban();
-        renderAlcaldes();
     </script>
 </body>
 </html>
