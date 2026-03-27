@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aquaducto - Gestión de Contactos y Tareas</title>
+    <title>Aquaducto - Gestión Integral</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,163 +25,266 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text); min-height: 100vh; }
 
-        .header { background: var(--bg-header); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,124,195,0.3); }
-        .logo { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        .logo svg { width: 32px; height: 32px; }
-        .user-badge { background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; }
-        .connection-status { font-size: 0.7rem; padding: 4px 8px; border-radius: 10px; margin-right: 10px; }
-        .connection-status.ok { background: var(--success); }
-        .connection-status.error { background: var(--danger); }
+        /* Header */
+        .header { background: var(--bg-header); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,124,195,0.3); }
+        .logo { font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .logo svg { width: 28px; height: 28px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .connection-badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 10px; }
+        .connection-badge.ok { background: var(--success); }
+        .connection-badge.offline { background: var(--danger); }
+        .user-badge { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; }
 
-        .nav-tabs { background: var(--bg-card); display: flex; padding: 0 40px; border-bottom: 1px solid var(--border); }
-        .nav-tab { padding: 18px 30px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 500; color: var(--text-muted); transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
-        .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-        .nav-tab.active { color: var(--primary); border-color: var(--primary); }
+        /* Stats Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 24px 40px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .stat-box { background: var(--bg-dark); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border); }
+        .stat-box .value { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+        .stat-box .label { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        .stat-box.alert .value { color: var(--warning); }
+        .stat-box.success .value { color: var(--success); }
 
-        .stats-bar { background: var(--bg-card); padding: 20px 40px; display: flex; gap: 40px; border-bottom: 1px solid var(--border); }
-        .stat-card { text-align: center; }
-        .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary); }
-        .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        /* Main Layout */
+        .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; padding: 24px 40px; }
+        .main-content { min-width: 0; }
 
-        .main-content { padding: 30px 40px; }
+        /* Nav Tabs */
+        .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .nav-tab { padding: 12px 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-weight: 500; color: var(--text-muted); transition: all 0.3s; }
+        .nav-tab:hover { border-color: var(--primary); color: var(--text); }
+        .nav-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .contactos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
-        .contacto-card { background: var(--bg-card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); transition: all 0.3s; }
-        .contacto-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 10px 40px rgba(0,124,195,0.15); }
-        .contacto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-        .contacto-nombre { font-size: 1.2rem; font-weight: 600; }
-        .contacto-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
-        .contacto-empresa { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 4px; }
-        .contacto-cargo { color: var(--secondary); font-size: 0.9rem; margin-bottom: 16px; }
-        .contacto-info { display: flex; flex-direction: column; gap: 8px; }
-        .contacto-info-item { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 0.9rem; }
-        .contacto-info-item svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
-        .contacto-stats { display: flex; gap: 20px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-        .contacto-stat { text-align: center; flex: 1; }
-        .contacto-stat-value { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
-        .contacto-stat-label { font-size: 0.75rem; color: var(--text-muted); }
-        .contacto-actions { display: flex; gap: 10px; margin-top: 16px; }
+        /* Contactos Grid */
+        .contactos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .contacto-card { background: var(--bg-card); border-radius: 14px; padding: 22px; border: 1px solid var(--border); transition: all 0.3s; }
+        .contacto-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,124,195,0.15); }
+        .contacto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .contacto-nombre { font-size: 1.1rem; font-weight: 600; }
+        .contacto-badge { background: var(--primary); color: white; padding: 3px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 500; }
+        .contacto-empresa { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2px; }
+        .contacto-cargo { color: var(--secondary); font-size: 0.85rem; margin-bottom: 14px; }
+        .contacto-info { display: flex; flex-direction: column; gap: 6px; }
+        .contacto-info-item { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem; }
+        .contacto-info-item svg { width: 14px; height: 14px; color: var(--primary); flex-shrink: 0; }
+        .contacto-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .contacto-tareas { font-size: 0.8rem; color: var(--text-muted); }
+        .contacto-tareas strong { color: var(--primary); }
+        .contacto-actions { display: flex; gap: 8px; }
 
-        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        /* Kanban */
+        .kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; }
+        .kanban-column { flex: 0 0 300px; background: var(--bg-card); border-radius: 14px; padding: 18px; max-height: calc(100vh - 420px); overflow-y: auto; }
+        .kanban-col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+        .kanban-col-title { font-weight: 600; font-size: 0.95rem; }
+        .kanban-col-count { background: var(--bg-dark); padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; color: var(--text-muted); }
+        .kanban-cards { display: flex; flex-direction: column; gap: 10px; min-height: 150px; }
+        .kanban-card { background: var(--bg-dark); border-radius: 10px; padding: 14px; border: 1px solid var(--border); cursor: grab; transition: all 0.2s; }
+        .kanban-card:hover { border-color: var(--primary); }
+        .kanban-card.dragging { opacity: 0.5; }
+        .kanban-card-title { font-weight: 500; margin-bottom: 6px; font-size: 0.9rem; }
+        .kanban-card-contact { font-size: 0.75rem; color: var(--primary); margin-bottom: 8px; }
+        .kanban-card-checklist { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .checklist-progress { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); }
+        .checklist-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .checklist-bar-fill { height: 100%; background: var(--success); transition: width 0.3s; }
+        .kanban-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .priority-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; }
+        .priority-alta { background: var(--danger); color: white; }
+        .priority-media { background: var(--warning); color: white; }
+        .priority-baja { background: var(--success); color: white; }
+        .kanban-add-btn { width: 100%; padding: 10px; background: transparent; border: 2px dashed var(--border); border-radius: 8px; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; transition: all 0.3s; margin-top: 10px; }
+        .kanban-add-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .kanban-column.drag-over { background: rgba(0,124,195,0.08); }
+
+        /* Sidebar */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-card { background: var(--bg-card); border-radius: 14px; padding: 20px; border: 1px solid var(--border); }
+        .sidebar-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .sidebar-title svg { width: 18px; height: 18px; color: var(--primary); }
+
+        /* Activity Feed */
+        .activity-feed { display: flex; flex-direction: column; gap: 12px; max-height: 300px; overflow-y: auto; }
+        .activity-item { display: flex; gap: 12px; padding: 10px; background: var(--bg-dark); border-radius: 8px; font-size: 0.85rem; }
+        .activity-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; }
+        .activity-icon.contact { background: rgba(0,124,195,0.2); color: var(--primary); }
+        .activity-icon.task { background: rgba(0,208,132,0.2); color: var(--success); }
+        .activity-icon.check { background: rgba(245,158,11,0.2); color: var(--warning); }
+        .activity-content { flex: 1; }
+        .activity-text { color: var(--text); line-height: 1.4; }
+        .activity-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* Quick Actions */
+        .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+        .quick-action { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-dark); border-radius: 8px; color: var(--text); font-size: 0.9rem; cursor: pointer; border: 1px solid var(--border); transition: all 0.3s; }
+        .quick-action:hover { border-color: var(--primary); background: rgba(0,124,195,0.1); }
+        .quick-action svg { width: 18px; height: 18px; color: var(--primary); }
+
+        /* Notifications */
+        .notifications { display: flex; flex-direction: column; gap: 8px; }
+        .notification { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg-dark); border-radius: 8px; border-left: 3px solid var(--primary); font-size: 0.85rem; }
+        .notification.warning { border-left-color: var(--warning); }
+        .notification.success { border-left-color: var(--success); }
+
+        /* Buttons */
+        .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-dark); }
         .btn-secondary { background: var(--border); color: var(--text); }
         .btn-secondary:hover { background: #3d3d6a; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-small { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-small { padding: 5px 10px; font-size: 0.75rem; }
 
-        .kanban-board { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; }
-        .kanban-column { flex: 0 0 320px; background: var(--bg-card); border-radius: 16px; padding: 20px; max-height: calc(100vh - 300px); overflow-y: auto; }
-        .kanban-column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
-        .kanban-column-title { font-weight: 600; font-size: 1rem; }
-        .kanban-column-count { background: var(--bg-dark); padding: 4px 10px; border-radius: 10px; font-size: 0.85rem; color: var(--text-muted); }
-        .kanban-cards { display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
-        .kanban-card { background: var(--bg-dark); border-radius: 10px; padding: 14px; border: 1px solid var(--border); cursor: grab; transition: all 0.2s; }
-        .kanban-card:hover { border-color: var(--primary); }
-        .kanban-card.dragging { opacity: 0.5; }
-        .kanban-card-title { font-weight: 500; margin-bottom: 8px; font-size: 0.95rem; }
-        .kanban-card-contacto { font-size: 0.8rem; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        .kanban-card-checklist { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-        .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
-        .checklist-item input { accent-color: var(--success); }
-        .checklist-item.completed { text-decoration: line-through; opacity: 0.6; }
-        .kanban-card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .priority-tag { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
-        .priority-alta { background: var(--danger); color: white; }
-        .priority-media { background: var(--warning); color: white; }
-        .priority-baja { background: var(--success); color: white; }
-        .kanban-add-btn { width: 100%; padding: 12px; background: transparent; border: 2px dashed var(--border); border-radius: 10px; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: all 0.3s; margin-top: 12px; }
-        .kanban-add-btn:hover { border-color: var(--primary); color: var(--primary); }
-        .kanban-column.drag-over { background: rgba(0,124,195,0.1); }
-
+        /* Modals */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
-        .modal { background: var(--bg-card); border-radius: 20px; padding: 32px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
-        .modal h2 { margin-bottom: 24px; color: var(--text); font-size: 1.4rem; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 16px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; transition: border-color 0.3s; }
+        .modal { background: var(--bg-card); border-radius: 18px; padding: 28px; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+        .modal h2 { margin-bottom: 20px; font-size: 1.3rem; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px 14px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; transition: border-color 0.3s; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
-        .form-group textarea { min-height: 100px; resize: vertical; }
-        .form-actions { display: flex; gap: 12px; margin-top: 28px; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-actions { display: flex; gap: 10px; margin-top: 24px; }
 
+        /* Login */
         .login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .login-screen.hidden { display: none; }
-        .login-box { background: var(--bg-card); border-radius: 24px; padding: 48px; text-align: center; border: 1px solid var(--border); width: 90%; max-width: 400px; }
-        .login-box h1 { font-size: 1.8rem; margin-bottom: 8px; }
-        .login-box p { color: var(--text-muted); margin-bottom: 32px; }
-        .login-box input { width: 100%; padding: 16px; margin-bottom: 16px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 1rem; text-align: center; }
-        .login-box button { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+        .login-box { background: var(--bg-card); border-radius: 20px; padding: 44px; text-align: center; border: 1px solid var(--border); width: 90%; max-width: 380px; }
+        .login-box h1 { font-size: 1.6rem; margin-bottom: 6px; }
+        .login-box p { color: var(--text-muted); margin-bottom: 28px; }
+        .login-box input { width: 100%; padding: 14px; margin-bottom: 14px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; text-align: center; }
+        .login-box button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
         .login-box button:hover { background: var(--primary-dark); }
-        .login-demo { margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); }
+        .login-demo { margin-top: 16px; font-size: 0.8rem; color: var(--text-muted); }
 
-        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 16px 28px; border-radius: 12px; font-weight: 500; display: none; z-index: 3000; box-shadow: 0 10px 40px rgba(0,208,132,0.3); }
+        /* Toast */
+        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--success); color: white; padding: 14px 24px; border-radius: 10px; font-weight: 500; display: none; z-index: 3000; box-shadow: 0 8px 30px rgba(0,208,132,0.3); }
         .toast.show { display: block; animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         .view { display: none; }
         .view.active { display: block; }
 
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-        .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.5; }
-        .empty-state h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--text); }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--text); }
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
+    <!-- Login -->
     <div class="login-screen" id="loginScreen">
         <div class="login-box">
             <h1>🚰 Aquaducto</h1>
-            <p>Gestión de Contactos y Tareas</p>
+            <p>Gestión Integral de Contactos y Tareas</p>
             <input type="text" id="loginUser" placeholder="Usuario" value="admin">
             <input type="password" id="loginPass" placeholder="Contraseña" value="admin123">
-            <button onclick="login()">Iniciar Sesión</button>
-            <p class="login-demo">Demo: admin / admin123</p>
+            <button onclick="login()">Entrar</button>
+            <p class="login-demo">admin / admin123</p>
         </div>
     </div>
 
     <!-- Header -->
     <div class="header">
         <div class="logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
             Aquaducto
         </div>
         <div class="header-right">
-            <span class="connection-status" id="connectionStatus">Conectando...</span>
-            <span class="user-badge" id="userBadge">👤 Administrador</span>
+            <span class="connection-badge" id="connectionBadge">Conectando...</span>
+            <span class="user-badge" id="userBadge">👤 Admin</span>
         </div>
     </div>
 
-    <!-- Nav Tabs -->
-    <div class="nav-tabs">
-        <div class="nav-tab active" data-view="contactos" onclick="showView('contactos')">👥 Contactos</div>
-        <div class="nav-tab" data-view="tareas" onclick="showView('tareas')">📋 Tareas</div>
+    <!-- Dashboard Stats -->
+    <div class="dashboard">
+        <div class="stat-box">
+            <div class="value" id="statContactos">0</div>
+            <div class="label">Contactos Totales</div>
+        </div>
+        <div class="stat-box">
+            <div class="value" id="statTareas">0</div>
+            <div class="label">Tareas Activas</div>
+        </div>
+        <div class="stat-box alert">
+            <div class="value" id="statPendientes">0</div>
+            <div class="label">Pendientes de Info</div>
+        </div>
+        <div class="stat-box success">
+            <div class="value" id="statCompletadas">0</div>
+            <div class="label">Completadas</div>
+        </div>
     </div>
 
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-        <div class="stat-card"><div class="stat-value" id="statContactos">0</div><div class="stat-label">Contactos</div></div>
-        <div class="stat-card"><div class="stat-value" id="statTareas">0</div><div class="stat-label">Tareas Activas</div></div>
-        <div class="stat-card"><div class="stat-value" id="statPendientes">0</div><div class="stat-label">Pendientes Info</div></div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Contactos View -->
-        <div class="view active" id="contactosView">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2 style="font-size: 1.3rem;">Tus Contactos</h2>
-                <button class="btn btn-primary" onclick="openContactoModal()">+ Nuevo Contacto</button>
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <div class="main-content">
+            <!-- Nav Tabs -->
+            <div class="nav-tabs">
+                <div class="nav-tab active" data-view="contactos" onclick="showView('contactos')">👥 Contactos</div>
+                <div class="nav-tab" data-view="tareas" onclick="showView('tareas')">📋 Tareas</div>
             </div>
-            <div class="contactos-grid" id="contactosGrid"></div>
+
+            <!-- Contactos View -->
+            <div class="view active" id="contactosView">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <h2 style="font-size: 1.2rem;">Contactos</h2>
+                    <button class="btn btn-primary" onclick="openContactoModal()">+ Nuevo</button>
+                </div>
+                <div class="contactos-grid" id="contactosGrid"></div>
+            </div>
+
+            <!-- Tareas View -->
+            <div class="view" id="tareasView">
+                <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Tablero de Tareas</h2>
+                <div class="kanban-board" id="kanbanBoard"></div>
+            </div>
         </div>
 
-        <!-- Tareas View -->
-        <div class="view" id="tareasView">
-            <h2 style="font-size: 1.3rem; margin-bottom: 20px;">Tablero de Tareas</h2>
-            <div class="kanban-board" id="kanbanBoard"></div>
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Activity -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    Actividad Reciente
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="activity-item">
+                        <div class="activity-icon contact">👤</div>
+                        <div class="activity-content">
+                            <div class="activity-text">Sistema iniciado</div>
+                            <div class="activity-time">Ahora</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Acciones Rápidas
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action" onclick="openContactoModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                        Añadir Contacto
+                    </div>
+                    <div class="quick-action" onclick="openTareaModal('nuevo')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        Nueva Tarea
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="sidebar-card">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    Notificaciones
+                </div>
+                <div class="notifications" id="notifications">
+                    <div class="notification">Todo listo para trabajar</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -191,12 +294,12 @@
             <h2 id="contactoModalTitle">Nuevo Contacto</h2>
             <form id="contactoForm">
                 <input type="hidden" id="contactoId">
-                <div class="form-group"><label>Nombre completo</label><input type="text" id="contactoNombre" required placeholder="Ej: Juan García"></div>
-                <div class="form-group"><label>Empresa</label><input type="text" id="contactoEmpresa" placeholder="Ej: Ayuntamiento de Madrid"></div>
-                <div class="form-group"><label>Cargo</label><input type="text" id="contactoCargo" placeholder="Ej: Director de Obras"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="contactoEmail" placeholder="Ej: juan@empresa.com"></div>
-                <div class="form-group"><label>Teléfono</label><input type="tel" id="contactoTelefono" placeholder="Ej: +34 600 000 000"></div>
-                <div class="form-group"><label>Notas</label><textarea id="contactoNotas" placeholder="Notas sobre este contacto..."></textarea></div>
+                <div class="form-group"><label>Nombre</label><input type="text" id="contactoNombre" required></div>
+                <div class="form-group"><label>Empresa</label><input type="text" id="contactoEmpresa"></div>
+                <div class="form-group"><label>Cargo</label><input type="text" id="contactoCargo"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="contactoEmail"></div>
+                <div class="form-group"><label>Teléfono</label><input type="tel" id="contactoTelefono"></div>
+                <div class="form-group"><label>Notas</label><textarea id="contactoNotas"></textarea></div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('contactoModal')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
@@ -208,37 +311,18 @@
     <!-- Modal Tarea -->
     <div class="modal-overlay" id="tareaModal">
         <div class="modal">
-            <h2 id="tareaModalTitle">Nueva Tarea</h2>
+            <h2>Nueva Tarea</h2>
             <form id="tareaForm">
-                <input type="hidden" id="tareaColumn">
-                <div class="form-group"><label>Título de la tarea</label><input type="text" id="tareaTitulo" required placeholder="Ej: Revisar presupuesto"></div>
-                <div class="form-group"><label>Descripción</label><textarea id="tareaDescripcion" placeholder="Detalles de la tarea..."></textarea></div>
-                <div class="form-group"><label>Contacto asociado</label><select id="tareaContacto"><option value="">-- Sin asociar --</option></select></div>
-                <div class="form-group"><label>Prioridad</label><select id="tareaPrioridad"><option value="baja">Baja</option><option value="media" selected>Media</option><option value="alta">Alta</option></select></div>
+                <input type="hidden" id="tareaColumn" value="nuevo">
+                <div class="form-group"><label>Título</label><input type="text" id="tareaTitulo" required></div>
+                <div class="form-group"><label>Descripción</label><textarea id="tareaDescripcion"></textarea></div>
+                <div class="form-group"><label>Contacto</label><select id="tareaContacto"><option value="">-- Sin asociar --</option></select></div>
+                <div class="form-group"><label>Prioridad</label><select id="tareaPrioridad"><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option></select></div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('tareaModal')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Crear Tarea</button>
+                    <button type="submit" class="btn btn-primary">Crear</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Modal Ver Tarea -->
-    <div class="modal-overlay" id="verTareaModal">
-        <div class="modal">
-            <h2 id="verTareaTitulo"></h2>
-            <p id="verTareaDescripcion" style="color: var(--text-muted); margin-bottom: 20px;"></p>
-            <div id="verTareaChecklist"></div>
-            <div style="margin-top: 20px;">
-                <label style="display: block; margin-bottom: 10px; color: var(--text-muted);">Añadir item al checklist:</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="nuevoChecklist" placeholder="Nuevo item..." style="flex: 1;">
-                    <button class="btn btn-primary" onclick="addChecklistItem()">Añadir</button>
-                </div>
-            </div>
-            <div class="form-actions" style="margin-top: 24px;">
-                <button class="btn btn-secondary" onclick="closeModal('verTareaModal')">Cerrar</button>
-            </div>
         </div>
     </div>
 
@@ -250,7 +334,7 @@
         // =====================
         // DATA
         // =====================
-        let COLUMNAS = [
+        const COLUMNAS = [
             { id: 'nuevo', nombre: 'Nuevo', color: '#007cc3' },
             { id: 'progreso', nombre: 'En Progreso', color: '#f59e0b' },
             { id: 'pendiente', nombre: 'Pendiente Info', color: '#8b5cf6' },
@@ -260,89 +344,132 @@
         let contactos = [];
         let tareas = [];
         let checklistData = {};
-        let currentVerTareaId = null;
+        let actividades = [{ text: 'Sistema iniciado', icon: '👤', time: new Date() }];
 
         // =====================
         // INIT
         // =====================
         async function init() {
-            // Init Supabase
-            const supabaseInit = await initSupabase();
-            if (supabaseInit && supabase) {
-                document.getElementById('connectionStatus').textContent = 'Supabase ✓';
-                document.getElementById('connectionStatus').className = 'connection-status ok';
+            const connected = await initSupabase();
+            if (connected && supabase) {
+                document.getElementById('connectionBadge').textContent = 'En línea ✓';
+                document.getElementById('connectionBadge').className = 'connection-badge ok';
                 await loadData();
+                subscribeToChanges(); // Realtime updates
             } else {
-                document.getElementById('connectionStatus').textContent = 'Modo Demo';
-                document.getElementById('connectionStatus').className = 'connection-status error';
-                // Demo data
-                contactos = [
-                    { id: 'demo1', nombre: 'María López', empresa: 'Ayuntamiento de Sevilla', cargo: 'Concejala de Urbanismo', email: 'maria.lopez@ayto-sevilla.es', telefono: '+34 954 000 000' },
-                    { id: 'demo2', nombre: 'Carlos Martínez', empresa: 'Diputación de Málaga', cargo: 'Director de Infraestructura', email: 'carlos.martinez@dipmalaga.es', telefono: '+34 952 000 000' }
-                ];
-                tareas = [
-                    { id: 'demo-t1', titulo: 'Revisar presupuesto Sevilla', descripcion: 'Enviar presupuesto detallado', columna_id: 'pendiente', prioridad: 'alta', contacto_id: 'demo1' }
-                ];
-                checklistData['demo-t1'] = [
-                    { id: 'ch1', texto: 'Presupuesto detallado', completado: false },
-                    { id: 'ch2', texto: 'Estudio de impacto', completado: false }
-                ];
+                document.getElementById('connectionBadge').textContent = 'Demo';
+                document.getElementById('connectionBadge').className = 'connection-badge offline';
+                loadDemoData();
             }
             renderAll();
         }
 
+        function loadDemoData() {
+            contactos = [
+                { id: 'd1', nombre: 'María López', empresa: 'Ayuntamiento de Sevilla', cargo: 'Concejala de Urbanismo', email: 'maria.lopez@ayto-sevilla.es', telefono: '+34 954 000 000' },
+                { id: 'd2', nombre: 'Carlos Martínez', empresa: 'Diputación de Málaga', cargo: 'Director de Infraestructura', email: 'carlos.martinez@dipmalaga.es', telefono: '+34 952 000 000' }
+            ];
+            tareas = [
+                { id: 't1', titulo: 'Revisar presupuesto Sevilla', descripcion: 'Enviar documentación', columna_id: 'pendiente', prioridad: 'alta', contacto_id: 'd1' },
+                { id: 't2', titulo: 'Aprobación proyecto', descripcion: '', columna_id: 'progreso', prioridad: 'media', contacto_id: 'd2' }
+            ];
+            checklistData = {
+                't1': [
+                    { id: 'c1', texto: 'Presupuesto detallado', completado: false },
+                    { id: 'c2', texto: 'Estudio impacto', completado: true }
+                ]
+            };
+        }
+
         async function loadData() {
             if (!supabase) return;
-            
-            // Load contactos
-            const { data: c } = await supabase.from('contactos').select('*').order('created_at', { ascending: false });
-            if (c) contactos = c;
-            
-            // Load tareas
-            const { data: t } = await supabase.from('tareas').select('*').order('created_at', { ascending: false });
-            if (t) tareas = t;
-            
-            // Load checklist
+
+            const [c, t] = await Promise.all([
+                supabase.from('contactos').select('*').order('created_at', { ascending: false }),
+                supabase.from('tareas').select('*').order('created_at', { ascending: false })
+            ]);
+
+            if (c.data) contactos = c.data;
+            if (t.data) tareas = t.data;
+
             for (const tarea of tareas) {
-                const { data: ch } = await supabase.from('checklist').select('*').eq('tarea_id', tarea.id);
-                if (ch) checklistData[tarea.id] = ch;
+                const ch = await supabase.from('checklist').select('*').eq('tarea_id', tarea.id);
+                if (ch.data) checklistData[tarea.id] = ch.data;
             }
         }
 
+        // =====================
+        // REALTIME SUBSCRIPTIONS
+        // =====================
+        function subscribeToChanges() {
+            if (!supabase) return;
+
+            supabase.channel('db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'contactos' }, () => {
+                    loadData().then(renderAll);
+                    addActivity('Nuevo contacto creado', 'contact');
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'tareas' }, () => {
+                    loadData().then(renderAll);
+                    addActivity('Tarea actualizada', 'task');
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'checklist' }, () => {
+                    loadData().then(renderAll);
+                    addActivity('Checklist modificado', 'check');
+                })
+                .subscribe();
+        }
+
+        // =====================
+        // ACTIVITY FEED
+        // =====================
+        function addActivity(text, type) {
+            const icons = { contact: '👤', task: '📋', check: '✓' };
+            actividades.unshift({ text, icon: icons[type] || '📌', time: new Date() });
+            if (actividades.length > 10) actividades.pop();
+            renderActivity();
+        }
+
+        function renderActivity() {
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = actividades.slice(0, 5).map(a => {
+                const t = formatTime(a.time);
+                return `<div class="activity-item">
+                    <div class="activity-icon ${type}">${a.icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-text">${a.text}</div>
+                        <div class="activity-time">${t}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diff = (now - date) / 1000;
+            if (diff < 60) return 'Hace un momento';
+            if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
+            if (diff < 86400) return `Hace ${Math.floor(diff/3600)}h`;
+            return date.toLocaleDateString('es-ES');
+        }
+
+        // =====================
+        // RENDER
+        // =====================
         function renderAll() {
             renderContactos();
             renderKanban();
-            updateStats();
+            renderStats();
+            renderActivity();
         }
 
-        // =====================
-        // LOGIN
-        // =====================
-        function login() {
-            const u = document.getElementById('loginUser').value;
-            const p = document.getElementById('loginPass').value;
-            if ((u === 'admin' && p === 'admin123') || (u === 'ceo' && p === 'ceo123')) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('userBadge').textContent = '👤 ' + (u === 'admin' ? 'Administrador' : 'CEO');
-                showToast('Bienvenido a Aquaducto');
-            } else {
-                showToast('Credenciales incorrectas', true);
-            }
+        function renderStats() {
+            document.getElementById('statContactos').textContent = contactos.length;
+            document.getElementById('statTareas').textContent = tareas.filter(t => t.columna_id !== 'completado').length;
+            document.getElementById('statPendientes').textContent = tareas.filter(t => t.columna_id === 'pendiente').length;
+            document.getElementById('statCompletadas').textContent = tareas.filter(t => t.columna_id === 'completado').length;
         }
 
-        // =====================
-        // VIEWS
-        // =====================
-        function showView(view) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelector(`.nav-tab[data-view="${view}"]`).classList.add('active');
-            document.getElementById(`${view}View`).classList.add('active');
-        }
-
-        // =====================
-        // RENDER CONTACTOS
-        // =====================
         function renderContactos() {
             const grid = document.getElementById('contactosGrid');
             if (!contactos.length) {
@@ -350,7 +477,7 @@
                 return;
             }
             grid.innerHTML = contactos.map(c => {
-                const tareasCount = tareas.filter(t => t.contacto_id === c.id).length;
+                const tareaCount = tareas.filter(t => t.contacto_id === c.id).length;
                 return `<div class="contacto-card">
                     <div class="contacto-header">
                         <span class="contacto-nombre">${c.nombre}</span>
@@ -360,62 +487,58 @@
                     <div class="contacto-cargo">${c.cargo || '-'}</div>
                     <div class="contacto-info">
                         ${c.email ? `<div class="contacto-info-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>` : ''}
-                        ${c.telefono ? `<div class="contacto-info-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.telefono}</div>` : ''}
+                        ${c.telefono ? `<div class="contacto-info-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>${c.telefono}</div>` : ''}
                     </div>
-                    <div class="contacto-stats">
-                        <div class="contacto-stat"><div class="contacto-stat-value">${tareasCount}</div><div class="contacto-stat-label">Tareas</div></div>
+                    <div class="contacto-footer">
+                        <span class="contacto-tareas"><strong>${tareaCount}</strong> tareas</span>
+                        <div class="contacto-actions">
+                            <button class="btn btn-secondary btn-small" onclick="editContacto('${c.id}')">Editar</button>
+                        </div>
                     </div>
-                    <div class="contacto-actions">
-                        <button class="btn btn-secondary btn-small" onclick="editContacto('${c.id}')">Editar</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteContacto('${c.id}')">Eliminar</button>
-                    </div>
-                </div>`;
+                </div                `;
             }).join('');
         }
 
-        // =====================
-        // RENDER KANBAN
-        // =====================
         function renderKanban() {
             const board = document.getElementById('kanbanBoard');
             board.innerHTML = COLUMNAS.map(col => {
                 const colTareas = tareas.filter(t => t.columna_id === col.id);
                 return `<div class="kanban-column">
-                    <div class="kanban-column-header">
-                        <span class="kanban-column-title">${col.nombre}</span>
-                        <span class="kanban-column-count">${colTareas.length}</span>
+                    <div class="kanban-col-header">
+                        <span class="kanban-col-title">${col.nombre}</span>
+                        <span class="kanban-col-count">${colTareas.length}</span>
                     </div>
                     <div class="kanban-cards" data-column="${col.id}" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
                         ${colTareas.map(t => renderTareaCard(t)).join('')}
                     </div>
-                    <button class="kanban-add-btn" onclick="openTareaModal('${col.id}')">+ Añadir tarea</button>
+                    <button class="kanban-add-btn" onclick="openTareaModal('${col.id}')">+ Añadir</button>
                 </div>`;
             }).join('');
 
-            // Add drag listeners
-            document.querySelectorAll('.kanban-card').forEach(card => {
-                card.addEventListener('dragstart', handleDragStart);
-                card.addEventListener('dragend', handleDragEnd);
+            document.querySelectorAll('.kanban-card').forEach(c => {
+                c.addEventListener('dragstart', handleDragStart);
+                c.addEventListener('dragend', handleDragEnd);
             });
         }
 
         function renderTareaCard(tarea) {
             const contacto = contactos.find(c => c.id === tarea.contacto_id);
             const checklist = checklistData[tarea.id] || [];
-            const completedCount = checklist.filter(c => c.completado).length;
-            
+            const completed = checklist.filter(c => c.completado).length;
+            const total = checklist.length;
+            const pct = total ? Math.round((completed / total) * 100) : 0;
+
             return `<div class="kanban-card" draggable="true" data-id="${tarea.id}">
                 <div class="kanban-card-title">${tarea.titulo}</div>
-                ${contacto ? `<div class="kanban-card-contacto">👤 ${contacto.nombre}</div>` : ''}
+                ${contacto ? `<div class="kanban-card-contact">👤 ${contacto.nombre}</div>` : ''}
                 ${checklist.length ? `<div class="kanban-card-checklist">
-                    ${checklist.map(c => `<div class="checklist-item ${c.completado ? 'completed' : ''}">
-                        <input type="checkbox" ${c.completado ? 'checked' : ''} onchange="toggleChecklist('${tarea.id}', '${c.id}', this.checked)">
-                        ${c.texto}
-                    </div>`).join('')}
+                    <div class="checklist-progress">
+                        <span>${completed}/${total}</span>
+                        <div class="checklist-bar"><div class="checklist-bar-fill" style="width:${pct}%"></div></div>
+                    </div>
                 </div>` : ''}
-                <div class="kanban-card-meta">
-                    <span class="priority-tag priority-${tarea.prioridad}">${tarea.prioridad.toUpperCase()}</span>
-                    <button class="btn btn-secondary btn-small" onclick="verTarea('${tarea.id}')">Ver</button>
+                <div class="kanban-card-footer">
+                    <span class="priority-badge priority-${tarea.prioridad}">${tarea.prioridad}</span>
                 </div>
             </div>`;
         }
@@ -423,104 +546,28 @@
         // =====================
         // DRAG & DROP
         // =====================
-        let draggedTarea = null;
+        let draggedId = null;
 
-        function handleDragStart(e) {
-            draggedTarea = e.target.dataset.id;
-            e.target.classList.add('dragging');
-        }
-
-        function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
-            document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.currentTarget.parentElement.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.currentTarget.parentElement.classList.remove('drag-over');
-        }
+        function handleDragStart(e) { draggedId = e.target.dataset.id; e.target.classList.add('dragging'); }
+        function handleDragEnd(e) { e.target.classList.remove('dragging'); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); }
+        function handleDragOver(e) { e.preventDefault(); e.currentTarget.parentElement.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.parentElement.classList.remove('drag-over'); }
 
         async function handleDrop(e) {
             e.preventDefault();
             e.currentTarget.parentElement.classList.remove('drag-over');
-            const newColumn = e.currentTarget.dataset.column;
-            if (draggedTarea) {
-                const tarea = tareas.find(t => t.id === draggedTarea);
+            const newCol = e.currentTarget.dataset.column;
+            if (draggedId) {
+                const tarea = tareas.find(t => t.id === draggedId);
                 if (tarea) {
-                    tarea.columna_id = newColumn;
-                    if (supabase) {
-                        await supabase.from('tareas').update({ columna_id: newColumn }).eq('id', draggedTarea);
-                    }
+                    tarea.columna_id = newCol;
+                    if (supabase) await supabase.from('tareas').update({ columna_id: newCol }).eq('id', draggedId);
+                    addActivity(`Tarea movida a ${COLUMNAS.find(c => c.id === newCol).nombre}`, 'task');
                     renderKanban();
-                    updateStats();
+                    renderStats();
                 }
             }
-            draggedTarea = null;
-        }
-
-        // =====================
-        // CHECKLIST
-        // =====================
-        async function toggleChecklist(tareaId, checklistId, completado) {
-            if (supabase) {
-                await supabase.from('checklist').update({ completado }).eq('id', checklistId);
-            }
-            if (checklistData[tareaId]) {
-                const item = checklistData[tareaId].find(c => c.id === checklistId);
-                if (item) item.completado = completado;
-            }
-            renderKanban();
-        }
-
-        async function addChecklistItem() {
-            const texto = document.getElementById('nuevoChecklist').value.trim();
-            if (!texto || !currentVerTareaId) return;
-
-            if (supabase) {
-                const { data } = await supabase.from('checklist').insert({ tarea_id: currentVerTareaId, texto, completado: false }).select().single();
-                if (data) {
-                    if (!checklistData[currentVerTareaId]) checklistData[currentVerTareaId] = [];
-                    checklistData[currentVerTareaId].push(data);
-                }
-            } else {
-                const newItem = { id: 'ch-' + Date.now(), texto, completado: false };
-                if (!checklistData[currentVerTareaId]) checklistData[currentVerTareaId] = [];
-                checklistData[currentVerTareaId].push(newItem);
-            }
-            document.getElementById('nuevoChecklist').value = '';
-            verTarea(currentVerTareaId);
-        }
-
-        function verTarea(tareaId) {
-            currentVerTareaId = tareaId;
-            const tarea = tareas.find(t => t.id === tareaId);
-            if (!tarea) return;
-
-            document.getElementById('verTareaTitulo').textContent = tarea.titulo;
-            document.getElementById('verTareaDescripcion').textContent = tarea.descripcion || 'Sin descripción';
-
-            const checklist = checklistData[tareaId] || [];
-            document.getElementById('verTareaChecklist').innerHTML = checklist.length 
-                ? checklist.map(c => `<div class="checklist-item ${c.completado ? 'completed' : ''}">
-                    <input type="checkbox" ${c.completado ? 'checked' : ''} onchange="toggleChecklist('${tareaId}', '${c.id}', this.checked)">
-                    ${c.texto}
-                </div>`).join('')
-                : '<p style="color: var(--text-muted);">Sin checklist</p>';
-
-            openModal('verTareaModal');
-        }
-
-        // =====================
-        // STATS
-        // =====================
-        function updateStats() {
-            document.getElementById('statContactos').textContent = contactos.length;
-            document.getElementById('statTareas').textContent = tareas.filter(t => t.columna_id !== 'completado').length;
-            document.getElementById('statPendientes').textContent = tareas.filter(t => t.columna_id === 'pendiente').length;
+            draggedId = null;
         }
 
         // =====================
@@ -529,7 +576,7 @@
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        function openContactoModal(id) {
+        function openContactoModal() {
             document.getElementById('contactoForm').reset();
             document.getElementById('contactoId').value = '';
             document.getElementById('contactoModalTitle').textContent = 'Nuevo Contacto';
@@ -550,22 +597,11 @@
             openModal('contactoModal');
         }
 
-        async function deleteContacto(id) {
-            if (!confirm('¿Eliminar este contacto?')) return;
-            if (supabase) await supabase.from('contactos').delete().eq('id', id);
-            contactos = contactos.filter(c => c.id !== id);
-            tareas.forEach(t => { if (t.contacto_id === id) t.contacto_id = null; });
-            renderAll();
-            showToast('Contacto eliminado');
-        }
-
-        function openTareaModal(columnId) {
+        function openTareaModal(colId) {
             document.getElementById('tareaForm').reset();
-            document.getElementById('tareaColumn').value = columnId;
-            document.getElementById('tareaModalTitle').textContent = 'Nueva Tarea';
+            document.getElementById('tareaColumn').value = colId;
             const select = document.getElementById('tareaContacto');
-            select.innerHTML = '<option value="">-- Sin asociar --</option>' + 
-                contactos.map(c => `<option value="${c.id}">${c.nombre} - ${c.empresa}</option>`).join('');
+            select.innerHTML = '<option value="">-- Sin asociar --</option>' + contactos.map(c => `<option value="${c.id}">${c.nombre} - ${c.empresa}</option>`).join('');
             openModal('tareaModal');
         }
 
@@ -583,12 +619,12 @@
                 telefono: document.getElementById('contactoTelefono').value,
                 notas: document.getElementById('contactoNotas').value
             };
-            
+
             if (id) {
                 if (supabase) await supabase.from('contactos').update(data).eq('id', id);
                 const idx = contactos.findIndex(c => c.id === id);
                 if (idx >= 0) contactos[idx] = { ...contactos[idx], ...data };
-                showToast('Contacto actualizado');
+                addActivity('Contacto actualizado', 'contact');
             } else {
                 if (supabase) {
                     const { data: newData } = await supabase.from('contactos').insert(data).select().single();
@@ -597,10 +633,11 @@
                     data.id = 'c' + Date.now();
                     contactos.unshift(data);
                 }
-                showToast('Contacto creado');
+                addActivity('Nuevo contacto creado', 'contact');
             }
             closeModal('contactoModal');
             renderAll();
+            showToast(id ? 'Actualizado' : 'Contacto creado');
         });
 
         document.getElementById('tareaForm').addEventListener('submit', async function(e) {
@@ -612,22 +649,45 @@
                 prioridad: document.getElementById('tareaPrioridad').value,
                 columna_id: document.getElementById('tareaColumn').value
             };
-            
+
             if (supabase) {
                 const { data: newData } = await supabase.from('tareas').insert(tarea).select().single();
-                if (newData) {
-                    tareas.unshift(newData);
-                    checklistData[newData.id] = [];
-                }
+                if (newData) { tareas.unshift(newData); checklistData[newData.id] = []; }
             } else {
                 tarea.id = 't' + Date.now();
                 tareas.unshift(tarea);
                 checklistData[tarea.id] = [];
             }
+            addActivity('Nueva tarea creada', 'task');
             closeModal('tareaModal');
             renderAll();
             showToast('Tarea creada');
         });
+
+        // =====================
+        // VIEWS
+        // =====================
+        function showView(view) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelector(`.nav-tab[data-view="${view}"]`).classList.add('active');
+            document.getElementById(`${view}View`).classList.add('active');
+        }
+
+        // =====================
+        // LOGIN
+        // =====================
+        function login() {
+            const u = document.getElementById('loginUser').value;
+            const p = document.getElementById('loginPass').value;
+            if ((u === 'admin' && p === 'admin123') || (u === 'ceo' && p === 'ceo123')) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('userBadge').textContent = '👤 ' + (u === 'admin' ? 'Admin' : 'CEO');
+                addActivity('Sesión iniciada', 'contact');
+            } else {
+                showToast('Credenciales incorrectas', true);
+            }
+        }
 
         // =====================
         // TOAST
