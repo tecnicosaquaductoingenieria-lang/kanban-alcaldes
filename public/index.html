@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban - Gestión de Alcalá</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.3rem; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .tabs { background: #16213e; display: flex; padding: 0 30px; border-bottom: 1px solid #2c3e50; }
+        .tab { padding: 15px 25px; cursor: pointer; border-bottom: 3px solid transparent; font-size: 0.95rem; transition: all 0.3s; }
+        .tab:hover { background: #1e2a4a; }
+        .tab.active { border-color: #e74c3c; background: #1e2a4a; }
+        .stats-bar { background: #16213e; padding: 15px 30px; display: flex; gap: 30px; }
+        .stat-item { display: flex; align-items: center; gap: 8px; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #e74c3c; }
+        .stat-label { font-size: 0.8rem; color: #888; }
+        .kanban-board { display: flex; gap: 20px; padding: 20px 30px; overflow-x: auto; min-height: calc(100vh - 250px); }
+        .column { flex: 0 0 300px; background: #16213e; border-radius: 10px; padding: 15px; max-height: calc(100vh - 280px); overflow-y: auto; }
+        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid; }
+        .column-header h2 { font-size: 1rem; text-transform: uppercase; }
+        .column-count { background: #1a1a2e; padding: 2px 10px; border-radius: 15px; font-size: 0.85rem; }
+        .column-cards { display: flex; flex-direction: column; gap: 10px; }
+        .card { background: #1a1a2e; border-radius: 8px; padding: 12px; cursor: grab; border-left: 4px solid; transition: all 0.3s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .card-alcalde { font-size: 0.75rem; color: #3498db; margin-bottom: 5px; }
+        .card-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+        .card-description { font-size: 0.8rem; color: #aaa; margin-bottom: 8px; }
+        .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+        .card-tag { padding: 2px 6px; background: #34495e; border-radius: 3px; font-size: 0.7rem; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #666; }
+        .priority { padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+        .priority.high { background: #e74c3c; color: white; }
+        .priority.medium { background: #f39c12; color: white; }
+        .priority.low { background: #27ae60; color: white; }
+        .add-card-btn { background: transparent; border: 2px dashed #34495e; color: #666; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; margin-top: 10px; }
+        .add-card-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+        .column.drag-over { background: #1e2a4a; }
+        .alcaldes-view { display: none; padding: 20px 30px; }
+        .alcaldes-view.active { display: block; }
+        .kanban-view { display: none; }
+        .kanban-view.active { display: flex; }
+        .alcaldes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .alcaldes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .alcalde-card { background: #16213e; border-radius: 10px; padding: 20px; border-left: 4px solid #3498db; }
+        .alcalde-nombre { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; }
+        .alcalde-empresa { font-size: 0.9rem; color: #888; margin-bottom: 5px; }
+        .alcalde-cargo { font-size: 0.85rem; color: #aaa; margin-bottom: 15px; }
+        .alcalde-contacto { font-size: 0.85rem; color: #3498db; margin-bottom: 5px; }
+        .alcalde-notas { font-size: 0.85rem; color: #666; font-style: italic; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2c3e50; }
+        .alcalde-stats { display: flex; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2c3e50; }
+        .alcalde-stat { text-align: center; }
+        .alcalde-stat-value { font-size: 1.3rem; font-weight: bold; color: #e74c3c; }
+        .alcalde-stat-label { font-size: 0.75rem; color: #888; }
+        .alcalde-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; }
+        .btn-primary { background: #e74c3c; color: white; }
+        .btn-primary:hover { background: #c0392b; }
+        .btn-secondary { background: #34495e; color: white; }
+        .btn-secondary:hover { background: #2c3e50; }
+        .btn-small { padding: 5px 10px; font-size: 0.8rem; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #16213e; border-radius: 15px; padding: 30px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { margin-bottom: 20px; color: #e74c3c; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #1a1a2e; border: 1px solid #34495e; border-radius: 5px; color: #fff; font-size: 1rem; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: white; padding: 15px 25px; border-radius: 5px; display: none; z-index: 2000; }
+        .toast.error { background: #e74c3c; }
+        .toast.show { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a2e; display: flex; justify-content: center; align-items: center; z-index: 3000; }
+        .login-overlay.hidden { display: none; }
+        .login-box { background: #16213e; padding: 40px; border-radius: 15px; text-align: center; }
+        .login-box h2 { margin-bottom: 20px; color: #e74c3c; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; background: #1a1a2e; border: 1px solid #34495e; border-radius: 5px; color: #fff; }
+        .login-box button { width: 100%; padding: 12px; background: #e74c3c; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 1rem; }
+        .login-box button:hover { background: #c0392b; }
+        .login-box p { font-size: 0.8rem; color: #666; margin-top: 15px; }
+        .connection-status { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
+        .connection-status.ok { background: #27ae60; }
+        .connection-status.error { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 Iniciar Sesión</h2>
+            <input type="text" id="loginUser" placeholder="Usuario">
+            <input type="password" id="loginPass" placeholder="Contraseña">
+            <button onclick="login()">Entrar</button>
+            <p>Demo: admin/admin123</p>
+            <p id="connectionStatus"></p>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>📋 Kanban - Gestión de Alcalá</h1>
+        <div class="header-right">
+            <span id="connectionIndicator"></span>
+            <span id="userDisplay"></span>
+            <button class="btn btn-secondary" onclick="logout()">Cerrar</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showView('kanban')">📋 Kanban</div>
+        <div class="tab" onclick="showView('alcaldes')">🏛️ Alcalá</div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Total</span></div>
+        <div class="stat-item"><span class="stat-value" id="statAlcaldes">0</span><span class="stat-label">Alcaldes</span></div>
+        <div class="stat-item"><span class="stat-value" id="statNuevo">0</span><span class="stat-label">Nuevo</span></div>
+        <div class="stat-item"><span class="stat-value" id="statEnProgreso">0</span><span class="stat-label">En Progreso</span></div>
+    </div>
+
+    <div class="kanban-view active" id="kanbanView">
+        <div class="kanban-board" id="kanbanBoard"></div>
+    </div>
+
+    <div class="alcaldes-view" id="alcaldesView">
+        <div class="alcaldes-header">
+            <h2>🏛️ Gestión de Alcalá</h2>
+            <button class="btn btn-primary" onclick="openAlcaldeModal()">+ Nuevo Alcalá</button>
+        </div>
+        <div class="alcaldes-grid" id="alcaldesGrid"></div>
+    </div>
+
+    <div class="modal-overlay" id="addCardModal">
+        <div class="modal">
+            <h2>Nueva Tarjeta</h2>
+            <form id="addCardForm">
+                <input type="hidden" id="addCardColumn">
+                <div class="form-group"><label>Título</label><input type="text" id="cardTitle" required></div>
+                <div class="form-group"><label>Descripción</label><textarea id="cardDescription"></textarea></div>
+                <div class="form-group"><label>Álcalde</label><select id="cardAlcalde"><option value="">-- Sin vincular --</option></select></div>
+                <div class="form-group"><label>Prioridad</label><select id="cardPriority"><option value="low">Baja</option><option value="medium" selected>Media</option><option value="high">Alta</option></select></div>
+                <div class="form-group"><label>Etiquetas</label><input type="text" id="cardTags" placeholder="permiso, licencia"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addCardModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="alcaldeModal">
+        <div class="modal">
+            <h2 id="alcaldeModalTitle">Nuevo Alcalá</h2>
+            <form id="alcaldeForm">
+                <input type="hidden" id="alcaldeId">
+                <div class="form-group"><label>Nombre</label><input type="text" id="alcaldeNombre" required></div>
+                <div class="form-group"><label>Empresa</label><input type="text" id="alcaldeEmpresa"></div>
+                <div class="form-group"><label>Cargo</label><input type="text" id="alcaldeCargo"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="alcaldeEmail"></div>
+                <div class="form-group"><label>Teléfono</label><input type="tel" id="alcaldeTelefono"></div>
+                <div class="form-group"><label>Notas</label><textarea id="alcaldeNotas"></textarea></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('alcaldeModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="alcaldeDetailModal">
+        <div class="modal">
+            <h2 id="detailAlcaldeNombre"></h2>
+            <p id="detailAlcaldeEmpresa" style="color: #888;"></p>
+            <p id="detailAlcaldeCargo" style="color: #aaa;"></p>
+            <div class="form-actions" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal('alcaldeDetailModal')">Cerrar</button>
+                <button class="btn btn-primary" onclick="editCurrentAlcalde()">Editar</button>
+                <button class="btn btn-secondary" onclick="deleteCurrentAlcalde()" style="background: #c0392b;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="config.js"></script>
+    <script>
+        let supabase = null;
+        let currentUser = null;
+        let columnas = [];
+        let tarjetas = [];
+        let alcalde = [];
+        let currentAlcaldeId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof window.supabase !== 'undefined' && SUPABASE_URL !== 'https://wpvtzjhzgzwsjdnpynbf.supabase.co') {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                document.getElementById('connectionStatus').textContent = 'Supabase OK';
+                document.getElementById('connectionStatus').className = 'connection-status ok';
+            } else {
+                document.getElementById('connectionStatus').textContent = 'Modo Demo';
+                document.getElementById('connectionStatus').className = 'connection-status error';
+            }
+            await loadData();
+        });
+
+        async function loadData() {
+            if (supabase) {
+                try {
+                    const [colsRes, tarjRes, alkRes] = await Promise.all([
+                        supabase.from('columnas').select('*'),
+                        supabase.from('tarjetas').select('*'),
+                        supabase.from('alcaldes').select('*')
+                    ]);
+                    columnas = colsRes.data || [];
+                    tarjetas = tarjRes.data || [];
+                    alcalde = alkRes.data || [];
+                } catch (e) { console.error(e); initDemo(); }
+            } else { initDemo(); }
+            renderKanban();
+            renderAlcaldes();
+            updateStats();
+            populateAlcaldeSelect();
+        }
+
+        function initDemo() {
+            columnas = [{ id: 'nuevo', name: 'Nuevo', color: '#3498db' },{ id: 'en-progreso', name: 'En Progreso', color: '#f39c12' },{ id: 'pendiente-info', name: 'Pendiente Info', color: '#9b59b6' },{ id: 'completado', name: 'Completado', color: '#27ae60' },{ id: 'archivado', name: 'Archivado', color: '#7f8c8d' }];
+            alcalde = [{ id: 'demo-1', nombre: 'María López', empresa: 'Ayuntamiento de Sevilla', cargo: 'Concejala de Urbanismo', email: 'maria.lopez@ayto-sevilla.es', telefono: '+34 954 000 000', notas: 'Proyecto de renovación urbana.', estado: 'activo' },{ id: 'demo-2', nombre: 'Carlos Martínez', empresa: 'Diputación de Málaga', cargo: 'Director de Infraestructura', email: 'carlos.martinez@dipmalaga.es', telefono: '+34 952 000 000', notas: 'Proyecto de carreteras.', estado: 'activo' }];
+            tarjetas = [];
+        }
+
+        function showView(view) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('kanbanView').classList.remove('active');
+            document.getElementById('alcaldesView').classList.remove('active');
+            if (view === 'kanban') { document.querySelector('.tab:nth-child(1)').classList.add('active'); document.getElementById('kanbanView').classList.add('active'); }
+            else { document.querySelector('.tab:nth-child(2)').classList.add('active'); document.getElementById('alcaldesView').classList.add('active'); }
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').textContent = tarjetas.length;
+            document.getElementById('statAlcaldes').textContent = alcalde.filter(a => a.estado === 'activo').length;
+            const cols = {};
+            columnas.forEach(c => cols[c.name] = 0);
+            tarjetas.forEach(t => { if (cols[t.column_id] !== undefined) cols[t.column_id]++; });
+            document.getElementById('statNuevo').textContent = cols['Nuevo'] || 0;
+            document.getElementById('statEnProgreso').textContent = cols['En Progreso'] || 0;
+        }
+
+        function renderKanban() {
+            const board = document.getElementById('kanbanBoard');
+            board.innerHTML = '';
+            columnas.forEach(col => {
+                const colCards = tarjetas.filter(t => t.column_id === col.id);
+                const colDiv = document.createElement('div');
+                colDiv.className = 'column';
+                colDiv.innerHTML = `<div class="column-header" style="border-color: ${col.color}"><h2>${col.name}</h2><span class="column-count">${colCards.length}</span></div>
+                <div class="column-cards" data-column="${col.id}" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+                    ${colCards.map(card => renderCard(card)).join('')}
+                    <button class="add-card-btn" onclick="openAddCardModal('${col.id}')">+ Añadir</button>
+                </div>`;
+                board.appendChild(colDiv);
+            });
+            document.querySelectorAll('.card').forEach(c => c.addEventListener('click', () => openCardDetail(c.dataset.id)));
+        }
+
+        function renderCard(card) {
+            const aInfo = card.alcalde_id ? alcalde.find(a => a.id === card.alcalde_id) : null;
+            const tags = (card.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+            const date = new Date(card.updated_at || card.created_at || Date.now()).toLocaleDateString('es-ES');
+            return `<div class="card" data-id="${card.id}" draggable="true" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)" style="border-color: ${getPC(card.priority)}">
+                ${aInfo ? `<div class="card-alcalde">🏛️ ${aInfo.nombre}</div>` : ''}
+                <div class="card-title">${card.title}</div>
+                ${card.description ? `<div class="card-description">${card.description.substring(0,60)}...</div>` : ''}
+                ${tags ? `<div class="card-meta">${tags}</div>` : ''}
+                <div class="card-footer"><span class="priority ${card.priority}">${card.priority.toUpperCase()}</span><span>${date}</span></div>
+            </div>`;
+        }
+
+        function getPC(p) { return { high: '#e74c3c', medium: '#f39c12', low: '#27ae60' }[p] || '#f39c12'; }
+
+        let draggedId = null;
+        function handleDragStart(e) { draggedId = e.target.dataset.id; e.target.classList.add('dragging'); }
+        function handleDragEnd(e) { e.target.classList.remove('dragging'); document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over')); }
+        function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        async function handleDrop(e) {
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            const newCol = e.currentTarget.dataset.column;
+            if (draggedId) {
+                const idx = tarjetas.findIndex(t => t.id === draggedId);
+                if (idx >= 0) {
+                    tarjetas[idx].column_id = newCol;
+                    tarjetas[idx].updated_at = new Date().toISOString();
+                    if (supabase) { await supabase.from('tarjetas').update({ column_id: newCol }).eq('id', draggedId); }
+                    renderKanban();
+                }
+            }
+            draggedId = null;
+        }
+
+        function renderAlcaldes() {
+            const grid = document.getElementById('alcaldesGrid');
+            grid.innerHTML = '';
+            if (alcalde.length === 0) { grid.innerHTML = '<p style="color: #666; grid-column: 1/-1; text-align: center;">No hay álbumes.</p>'; return; }
+            alcalde.forEach(a => {
+                const tCount = tarjetas.filter(t => t.alcalde_id === a.id).length;
+                const aCount = tarjetas.filter(t => t.alcalde_id === a.id && t.column_id !== 'completado' && t.column_id !== 'archivado').length;
+                const div = document.createElement('div');
+                div.className = 'alcalde-card';
+                div.innerHTML = `<div class="alcalde-nombre">${a.nombre}</div>
+                    <div class="alcalde-empresa">${a.empresa || 'Sin empresa'}</div>
+                    <div class="alcalde-cargo">${a.cargo || 'Sin cargo'}</div>
+                    ${a.email ? `<div class="alcalde-contacto">📧 ${a.email}</div>` : ''}
+                    ${a.notas ? `<div class="alcalde-notas">"${a.notas}"</div>` : ''}
+                    <div class="alcalde-stats"><div class="alcalde-stat"><div class="alcalde-stat-value">${tCount}</div><div class="alcalde-stat-label">Total</div></div><div class="alcalde-stat"><div class="alcalde-stat-value">${aCount}</div><div class="alcalde-stat-label">Activas</div></div></div>
+                    <div class="alcalde-actions"><button class="btn btn-primary btn-small" onclick="openAlcaldeDetail('${a.id}')">Ver</button><button class="btn btn-secondary btn-small" onclick="openAlcaldeModal('${a.id}')">Editar</button></div>`;
+                grid.appendChild(div);
+            });
+        }
+
+        function populateAlcaldeSelect() {
+            const s = document.getElementById('cardAlcalde');
+            s.innerHTML = '<option value="">-- Sin vincular --</option>';
+            alcalde.filter(a => a.estado === 'activo').forEach(a => { s.innerHTML += `<option value="${a.id}">${a.nombre} - ${a.empresa}</option>`; });
+        }
+
+        function openAddCardModal(colId) { document.getElementById('addCardColumn').value = colId; document.getElementById('addCardForm').reset(); document.getElementById('addCardModal').classList.add('active'); }
+        function openAlcaldeModal(id = null) {
+            document.getElementById('alcaldeForm').reset(); document.getElementById('alcaldeId').value = '';
+            document.getElementById('alcaldeModalTitle').textContent = id ? 'Editar Alcalá' : 'Nuevo Alcalá';
+            if (id) { const a = alcalde.find(al => al.id === id); if (a) { document.getElementById('alcaldeNombre').value = a.nombre; document.getElementById('alcaldeEmpresa').value = a.empresa || ''; document.getElementById('alcaldeCargo').value = a.cargo || ''; document.getElementById('alcaldeEmail').value = a.email || ''; document.getElementById('alcaldeTelefono').value = a.telefono || ''; document.getElementById('alcaldeNotas').value = a.notas || ''; document.getElementById('alcaldeId').value = a.id; } }
+            document.getElementById('alcaldeModal').classList.add('active');
+        }
+        function openAlcaldeDetail(id) { currentAlcaldeId = id; const a = alcalde.find(al => al.id === id); if (!a) return; document.getElementById('detailAlcaldeNombre').textContent = a.nombre; document.getElementById('detailAlcaldeEmpresa').textContent = a.empresa || ''; document.getElementById('detailAlcaldeCargo').textContent = a.cargo || ''; document.getElementById('alcaldeDetailModal').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function editCurrentAlcalde() { closeModal('alcaldeDetailModal'); openAlcaldeModal(currentAlcaldeId); }
+        async function deleteCurrentAlcalde() { if (!confirm('¿Eliminar?')) return; if (supabase) { await supabase.from('alcaldes').delete().eq('id', currentAlcaldeId); } alcalde = alcalde.filter(a => a.id !== currentAlcaldeId); closeModal('alcaldeDetailModal'); renderAlcaldes(); updateStats(); showToast('Eliminado'); }
+
+        document.getElementById('addCardForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newCard = { title: document.getElementById('cardTitle').value, description: document.getElementById('cardDescription').value, column_id: document.getElementById('addCardColumn').value, priority: document.getElementById('cardPriority').value, tags: document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t), alcald_id: document.getElementById('cardAlcalde').value || null };
+            if (supabase) { const { data } = await supabase.from('tarjetas').insert(newCard).select().single(); if (data) tarjetas.push(data); }
+            else { newCard.id = 'local-' + Date.now(); newCard.created_at = new Date().toISOString(); newCard.updated_at = new Date().toISOString(); tarjetas.push(newCard); }
+            closeModal('addCardModal'); renderKanban(); updateStats(); showToast('Tarjeta creada');
+        });
+
+        document.getElementById('alcaldeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('alcaldeId').value;
+            const data = { nombre: document.getElementById('alcaldeNombre').value, empresa: document.getElementById('alcaldeEmpresa').value, cargo: document.getElementById('alcaldeCargo').value, email: document.getElementById('alcaldeEmail').value, telefono: document.getElementById('alcaldeTelefono').value, notas: document.getElementById('alcaldeNotas').value };
+            if (supabase) { if (id) { await supabase.from('alcaldes').update(data).eq('id', id); } else { const { data: newData } = await supabase.from('alcaldes').insert(data).select().single(); if (newData) alcalde.push(newData); } }
+            else { if (id) { const idx = alcalde.findIndex(a => a.id === id); if (idx >= 0) alcalde[idx] = { ...alcalde[idx], ...data }; } else { data.id = 'local-' + Date.now(); data.estado = 'activo'; data.created_at = new Date().toISOString(); alcalde.push(data); } }
+            closeModal('alcaldeModal'); renderAlcaldes(); updateStats(); showToast(id ? 'Actualizado' : 'Creado');
+        });
+
+        function login() {
+            const u = document.getElementById('loginUser').value, p = document.getElementById('loginPass').value;
+            if ((u === 'admin' && p === 'admin123') || (u === 'ceo' && p === 'ceo123')) { currentUser = { id: u, name: u === 'admin' ? 'Administrador' : 'CEO' }; document.getElementById('userDisplay').textContent = `👤 ${currentUser.name}`; document.getElementById('loginOverlay').classList.add('hidden'); showToast(`Bienvenido, ${currentUser.name}!`); }
+            else { showToast('Credenciales inválidas', true); }
+        }
+        function logout() { document.getElementById('loginOverlay').classList.remove('hidden'); currentUser = null; }
+
+        function showToast(msg, isError = false) { const t = document.getElementById('toast'); t.textContent = msg; t.className = isError ? 'toast error show' : 'toast show'; setTimeout(() => { t.className = 'toast'; }, 3000); }
+    </script>
+</body>
+</html>
